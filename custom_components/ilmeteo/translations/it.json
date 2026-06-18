@@ -10,14 +10,14 @@
       },
       "select": {
         "title": "📍 Seleziona il comune",
-        "description": "Trovati **{count}** risultati. Seleziona il tuo comune:",
+        "description": "Trovati {count} risultati. Per inserire un ID manualmente consulta la [documentazione]({doc_url}).",
         "data": {
           "location": "Comune"
         }
       },
       "manual": {
         "title": "✏️ Inserisci ID manuale",
-        "description": "Inserisci l'ID numerico del comune ilMeteo.\nPuoi trovarlo nell'URL del sito, ad esempio `ilmeteo.it/meteo/arcisate` → ID 299.",
+        "description": "Inserisci l'ID numerico del comune. Consulta la [lista completa dei comuni]({doc_url}) per trovare il tuo ID.",
         "data": {
           "location_id": "ID Località"
         }

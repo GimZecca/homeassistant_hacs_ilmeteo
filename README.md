@@ -53,7 +53,7 @@ Integrazione non ufficiale per [ilMeteo.it](https://www.ilmeteo.it) che porta le
 ## Configurazione
 
 1. **Impostazioni** → **Dispositivi e Servizi** → **Aggiungi Integrazione** → cerca **ilMeteo**
-2. Digita il nome del comune (es. `Milano`, `Roma`, `Arcisate`)
+2. Digita il nome del comune (es. `Milano`, `Roma`)
 3. Seleziona il comune corretto dalla lista
 4. Conferma
 
@@ -70,7 +70,6 @@ Esempi comuni:
 |---|---|
 | Roma | 11 (Accadia)… cerca su ilmeteo.it |
 | Milano | 149 |
-| Arcisate (VA) | 299 |
 | Arco (TN) | 300 |
 
 Il modo più affidabile è intercettare il traffico dell'app ufficiale o cercare

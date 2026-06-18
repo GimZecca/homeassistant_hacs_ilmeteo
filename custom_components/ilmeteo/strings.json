@@ -3,21 +3,21 @@
     "step": {
       "user": {
         "title": "Cerca il tuo comune",
-        "description": "Digita il nome del comune di cui vuoi le previsioni meteo (es. {example})",
+        "description": "Digita il nome del comune di cui vuoi le previsioni meteo (es. {Roma})",
         "data": {
           "search": "Nome comune"
         }
       },
       "select": {
         "title": "Scegli il comune",
-        "description": "Trovati {count} risultati. Seleziona il tuo comune:",
+        "description": "Trovati {count} risultati. Per inserire un ID manualmente consulta la [lista completa dei comuni]({doc_url}).",
         "data": {
           "location": "Comune"
         }
       },
       "manual": {
         "title": "Inserisci ID manuale",
-        "description": "Inserisci l'ID numerico del comune ilMeteo",
+        "description": "Inserisci l'ID numerico del comune. Consulta la [lista completa dei comuni]({doc_url}) per trovare il tuo ID.",
         "data": {
           "location_id": "ID Località"
         }
