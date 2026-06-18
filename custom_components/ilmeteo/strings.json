@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Cerca il tuo comune",
+        "description": "Digita il nome del comune di cui vuoi le previsioni meteo (es. {example})",
+        "data": {
+          "search": "Nome comune"
+        }
+      },
+      "select": {
+        "title": "Scegli il comune",
+        "description": "Trovati {count} risultati. Seleziona il tuo comune:",
+        "data": {
+          "location": "Comune"
+        }
+      },
+      "manual": {
+        "title": "Inserisci ID manuale",
+        "description": "Inserisci l'ID numerico del comune ilMeteo",
+        "data": {
+          "location_id": "ID Località"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossibile connettersi a ilMeteo. Controlla la connessione.",
+      "no_results": "Nessun comune trovato. Prova con un nome diverso.",
+      "too_short": "Inserisci almeno 2 caratteri.",
+      "invalid_selection": "Selezione non valida.",
+      "invalid_id": "ID non valido. Deve essere un numero intero.",
+      "unknown": "Errore sconosciuto."
+    },
+    "abort": {
+      "already_configured": "Questa località è già configurata."
+    }
+  }
+}
