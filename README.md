@@ -5,9 +5,8 @@
 
 Integrazione non ufficiale per [ilMeteo.it](https://www.ilmeteo.it) che porta le previsioni meteo italiane in Home Assistant.
 
-> **Disclaimer:** This integration is unofficial and not affiliated with ilMeteo.it.
-> It uses an undocumented API discovered through reverse engineering of the official
-> Android app, intended for personal, non-commercial use only. Use at your own risk.
+> **Disclaimer:** This is an unofficial integration, not affiliated with or endorsed by ilMeteo.it.
+> Intended for personal, non-commercial use only. Use at your own risk.
 
 ---
 
@@ -18,6 +17,7 @@ Integrazione non ufficiale per [ilMeteo.it](https://www.ilmeteo.it) che porta le
   - **Previsioni orarie** fino a 48 ore
   - **Previsioni giornaliere** fino a 15 giorni
 - **14 sensori** dedicati:
+
   | Sensore | Unità |
   |---|---|
   | Temperatura attuale | °C |
@@ -57,51 +57,33 @@ Integrazione non ufficiale per [ilMeteo.it](https://www.ilmeteo.it) che porta le
 3. Seleziona il comune corretto dalla lista
 4. Conferma
 
-Il database comuni (~8000 località) viene scaricato automaticamente dall'API
-ilMeteo al primo avvio e cachato localmente. Non è necessario conoscere l'ID
-numerico — la ricerca per nome funziona immediatamente.
+Il database dei comuni (~8000 località) viene scaricato automaticamente al primo
+avvio e cachato localmente. Non è necessario conoscere l'ID numerico — la ricerca
+per nome funziona immediatamente.
 
 ### Trovare l'ID manualmente (opzionale)
 
-Se la ricerca non trova il tuo comune, puoi inserire l'ID numerico direttamente.
-Esempi comuni:
+Se preferisci inserire l'ID numerico direttamente, puoi consultare la
+[lista ufficiale dei comuni](https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf)
+pubblicata da ilMeteo.
 
 | Città | ID |
 |---|---|
-| Roma | 11 (Accadia)… cerca su ilmeteo.it |
 | Milano | 149 |
 | Arco (TN) | 300 |
-
-Il modo più affidabile è intercettare il traffico dell'app ufficiale o cercare
-il numero nel codice sorgente HTML di [ilmeteo.it](https://www.ilmeteo.it).
 
 ---
 
 ## Aggiornamento dati
 
-Le previsioni si aggiornano ogni **10 minuti**, in linea con l'app ufficiale.
+Le previsioni si aggiornano ogni **10 minuti**.
 
 ---
 
-## Note tecniche
+## Note legali
 
-### Token di autenticazione
-
-L'API richiede un parametro `x` calcolato giornalmente:
-
-```
-x = MD5(method + "-mobileApp-" + dayOfMonth)
-```
-
-Questa formula è stata ricavata dall'analisi della classe `MeteoDataParse`
-dell'APK Android ufficiale con [jadx](https://github.com/skylot/jadx).
-
-### Database comuni
-
-I comuni vengono scaricati dall'endpoint `getDB` dell'API ilMeteo, che restituisce
-un CSV semicolon-separated con ID, provincia, regione, nome, coordinate e altitudine.
-Il database viene cachato nello storage di Home Assistant per evitare download
-ripetuti ad ogni riavvio.
+Questa integrazione è destinata esclusivamente all'uso personale e non commerciale.
+Non è affiliata né approvata da ilMeteo.it. Utilizza a tuo rischio e pericolo.
 
 ---
 
