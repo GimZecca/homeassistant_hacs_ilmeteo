@@ -51,14 +51,13 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     return await self.async_step_select()
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema({
-                vol.Required("search"): TextSelector(
-                    TextSelectorConfig(type=TextSelectorType.TEXT)
-                ),
-            }),
-            errors=errors,
-            description_placeholders={"example": "es. Milano, Roma, Arcisate..."},
+			step_id="select",
+			data_schema=vol.Schema({...}),
+			errors=errors,
+			description_placeholders={
+				"count": str(len(self._search_results)),
+				"doc_url": "https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf",
+			},
         )
 
     async def async_step_select(self, user_input=None):
@@ -89,7 +88,7 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     errors["location"] = "cannot_connect"
 
         options = [r["label"] for r in self._search_results]
-        options.append("✏️ Inserisci ID manualmente...")
+        options.append("✏️ Inserisci ID manualmente... (https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf)")
         # Usiamo __manual__ come sentinel
         option_values = [r["label"] for r in self._search_results] + ["__manual__"]
 
@@ -107,7 +106,10 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
             }),
             errors=errors,
-            description_placeholders={"count": str(len(self._search_results))},
+            description_placeholders={
+				"count": str(len(self._search_results)),
+				"doc_url": "https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf",
+			},
         )
 
     async def async_step_manual(self, user_input=None):
