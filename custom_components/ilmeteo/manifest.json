@@ -1,7 +1,7 @@
 {
   "domain": "ilmeteo",
   "name": "ilMeteo.it",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "icon": "icon.png",
   "documentation": "https://github.com/yourusername/ha-ilmeteo",
   "issue_tracker": "https://github.com/yourusername/ha-ilmeteo/issues",
