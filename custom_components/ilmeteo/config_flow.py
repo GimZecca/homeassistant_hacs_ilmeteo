@@ -21,9 +21,11 @@ from .comuni_api import async_get_comuni, search_comuni
 
 _LOGGER = logging.getLogger(__name__)
 
+DOC_URL = "https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf"
+
 
 class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Config flow a tre passi: carica comuni → cerca → seleziona → conferma."""
+    """Config flow a tre passi: cerca → seleziona → conferma."""
 
     VERSION = 1
 
@@ -35,7 +37,6 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Passo 1: campo di ricerca per nome comune."""
         errors = {}
 
-        # Carica il dizionario comuni (da cache o API)
         if not self._comuni:
             self._comuni = await async_get_comuni(self.hass)
 
@@ -51,13 +52,16 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     return await self.async_step_select()
 
         return self.async_show_form(
-			step_id="select",
-			data_schema=vol.Schema({...}),
-			errors=errors,
-			description_placeholders={
-				"count": str(len(self._search_results)),
-				"doc_url": "https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf",
-			},
+            step_id="user",
+            data_schema=vol.Schema({
+                vol.Required("search"): TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.TEXT)
+                ),
+            }),
+            errors=errors,
+            description_placeholders={
+                "example": "es. Milano, Roma, Torino...",
+            },
         )
 
     async def async_step_select(self, user_input=None):
@@ -87,11 +91,6 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 except CannotConnect:
                     errors["location"] = "cannot_connect"
 
-        options = [r["label"] for r in self._search_results]
-        options.append("✏️ Inserisci ID manualmente... (https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf)")
-        # Usiamo __manual__ come sentinel
-        option_values = [r["label"] for r in self._search_results] + ["__manual__"]
-
         return self.async_show_form(
             step_id="select",
             data_schema=vol.Schema({
@@ -107,9 +106,9 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }),
             errors=errors,
             description_placeholders={
-				"count": str(len(self._search_results)),
-				"doc_url": "https://www.ilmeteo.it/portale/files/ilmeteo_doc_xml_codici_comuni.pdf",
-			},
+                "count": str(len(self._search_results)),
+                "doc_url": DOC_URL,
+            },
         )
 
     async def async_step_manual(self, user_input=None):
@@ -137,6 +136,9 @@ class IlMeteoConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
             }),
             errors=errors,
+            description_placeholders={
+                "doc_url": DOC_URL,
+            },
         )
 
     async def _validate(self, location_id: int) -> str:
