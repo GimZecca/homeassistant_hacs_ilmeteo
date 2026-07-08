@@ -38,6 +38,11 @@ Integrazione non ufficiale per [ilMeteo.it](https://www.ilmeteo.it) che porta le
 
 ## Installazione via HACS
 
+Clicca il pulsante per aggiungere automaticamente il repository:
+
+[![Open your Home Assistant instance and add this repository.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=GimZecca&repository=homeassistant_hacs_ilmeteo&category=integration)
+
+Oppure manualmente:
 1. In HACS → **Integrations** → ⋮ → **Custom repositories**
 2. Aggiungi l'URL di questo repo, categoria **Integration**
 3. Cerca **ilMeteo** e clicca **Download**
