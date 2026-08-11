@@ -19,7 +19,7 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-# Mappa simbolo ilMeteo → condizione Home Assistant
+# Mappa simbolo diurno ilMeteo (1-24, 4b) → condizione Home Assistant.
 CONDITION_MAP: dict[str, str] = {
     "1":   "sunny",
     "2":   "sunny",           # sereno e caldo
@@ -46,13 +46,37 @@ CONDITION_MAP: dict[str, str] = {
     "22":  "sunny",           # caldo estremo
     "23":  "partlycloudy",    # nubi sparse e caldo
     "24":  "sunny",
-    "101": "clear-night",
-    "103": "partlycloudy",
-    "104": "cloudy",
-    "105": "rainy",
-    "110": "rainy",
-    "116": "lightning-rainy",
 }
+
+# Alcuni simboli diurni hanno una condizione HA diversa di notte
+# (es. "sereno" diventa "clear-night" invece di "sunny").
+NIGHT_CONDITION_OVERRIDE: dict[str, str] = {
+    "1": "clear-night",
+}
+
+
+def _condition_from_simbolo(simbolo: str) -> str:
+    """Mappa il simbolo ilMeteo a una condizione HA.
+
+    ilMeteo usa simbolo diurno 1-24 (+4b) e, per la notte, lo stesso
+    codice + 100 (es. 121 = versione notturna di 21, 105 = versione
+    notturna di 5). Questa funzione normalizza qualsiasi variante
+    notturna riconducendola al diurno, così non serve elencare ogni
+    combinazione a mano (a differenza dell'elenco statico precedente,
+    che copriva solo le varianti osservate empiricamente).
+    """
+    simbolo = str(simbolo).strip()
+    if not simbolo:
+        return "exceptional"
+
+    if simbolo.isdigit() and int(simbolo) > 100:
+        base = str(int(simbolo) - 100)
+        override = NIGHT_CONDITION_OVERRIDE.get(base)
+        if override:
+            return override
+        return CONDITION_MAP.get(base, "exceptional")
+
+    return CONDITION_MAP.get(simbolo, "exceptional")
 
 
 # ---------- helpers ----------
@@ -169,8 +193,7 @@ class IlMeteoWeather(CoordinatorEntity, WeatherEntity):
 
     @property
     def condition(self) -> str | None:
-        simbolo = str(self._situazione.get("@simbolo", ""))
-        return CONDITION_MAP.get(simbolo, "exceptional")
+        return _condition_from_simbolo(self._situazione.get("@simbolo", ""))
 
     async def async_forecast_hourly(self) -> list[Forecast] | None:
         return self._hourly()
@@ -202,7 +225,7 @@ class IlMeteoWeather(CoordinatorEntity, WeatherEntity):
                 forecasts.append(Forecast(
                     datetime=dt,
                     native_temperature=_temp(r.get("@temperatura")),
-                    condition=CONDITION_MAP.get(str(r.get("@simbolo", "")), "exceptional"),
+                    condition=_condition_from_simbolo(r.get("@simbolo", "")),
                     native_precipitation=_precip_mm(r.get("@precipitazioni_valore")),
                     precipitation_probability=_float(r.get("@precipitazioni_prob")),
                     humidity=_pct(r.get("@umidita")),
@@ -228,7 +251,7 @@ class IlMeteoWeather(CoordinatorEntity, WeatherEntity):
                 datetime=dt,
                 native_temperature=_temp(g.get("@max")),
                 native_templow=_temp(g.get("@min")),
-                condition=CONDITION_MAP.get(str(g.get("@simbolo", "")), "exceptional"),
+                condition=_condition_from_simbolo(g.get("@simbolo", "")),
                 native_precipitation=_precip_mm(g.get("@precipitazioni_valore")),
                 precipitation_probability=_float(g.get("@attendibilita_prob")),
                 native_wind_speed=_wind_speed(g.get("@wind")),
