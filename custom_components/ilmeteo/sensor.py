@@ -22,45 +22,22 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
+from .weather import (
+    _condition_from_simbolo,
+    _float,
+    _pct,
+    _precip_mm,
+    _pressure,
+    _temp,
+    _wind_speed,
+)
 
 
 # ---------- helpers ----------
 
-def _temp(val: str | None) -> float | None:
-    try:
-        return float(str(val).replace("°C","").replace("°","").replace(",",".").strip())
-    except (ValueError, AttributeError):
-        return None
-
-def _float(val: str | None) -> float | None:
-    try:
-        return float(str(val).replace(",",".").strip())
-    except (ValueError, AttributeError):
-        return None
-
-def _pct(val: str | None) -> float | None:
-    try:
-        return float(str(val).replace("%","").strip())
-    except (ValueError, AttributeError):
-        return None
-
-def _pressure(val: str | None) -> float | None:
-    try:
-        return float(str(val).replace("mb","").strip())
-    except (ValueError, AttributeError):
-        return None
-
-def _wind_speed(val: str | None) -> float | None:
-    try:
-        speed = str(val).split()[0]
-        if "/" in speed:
-            speed = speed.split("/")[0]
-        return float(speed)
-    except (ValueError, AttributeError, IndexError):
-        return None
-
 def _situazione(data: dict, key: str) -> Any:
     return data.get("localita", {}).get("situazione", {}).get(key)
+
 
 def _descrizione(data: dict) -> str | None:
     desc = data.get("localita", {}).get("situazione", {}).get("descrizione")
@@ -68,14 +45,31 @@ def _descrizione(data: dict) -> str | None:
         return desc.get("#text")
     return desc
 
+
 def _last_update(data: dict) -> str | None:
     return data.get("localita", {}).get("situazione", {}).get("lastUpdate")
 
-def _today(data: dict, key: str) -> Any:
+
+def _giorni(data: dict) -> list[dict]:
     giorni = data.get("giornaliere", {}).get("giorno", [])
     if isinstance(giorni, dict):
         giorni = [giorni]
-    return giorni[0].get(key) if giorni else None
+    return giorni
+
+
+def _giorno(data: dict, index: int) -> dict:
+    """Restituisce il blocco giorno all'indice indicato (0=oggi, 1=domani, ...)."""
+    g = _giorni(data)
+    return g[index] if len(g) > index else {}
+
+
+def _oggi(data: dict) -> dict:
+    return _giorno(data, 0)
+
+
+def _domani(data: dict) -> dict:
+    return _giorno(data, 1)
+
 
 def _quota_zero(data: dict) -> int | None:
     previsioni = data.get("previsione", [])
@@ -89,7 +83,7 @@ def _quota_zero(data: dict) -> int | None:
             qz = r.get("@quotazero", "")
             if qz:
                 try:
-                    return int(str(qz).replace("m","").strip())
+                    return int(str(qz).replace("m", "").strip())
                 except ValueError:
                     pass
     return None
@@ -105,6 +99,7 @@ class IlMeteoSensorDescription(SensorEntityDescription):
 
 
 SENSORS: list[IlMeteoSensorDescription] = [
+    # ---- Condizioni attuali ----
     IlMeteoSensorDescription(
         key="temperatura",
         name="Temperatura",
@@ -158,36 +153,46 @@ SENSORS: list[IlMeteoSensorDescription] = [
         value_fn=_last_update,
     ),
     IlMeteoSensorDescription(
+        key="quota_zero",
+        name="Quota Zero Termico",
+        state_class=SensorStateClass.MEASUREMENT,
+        custom_unit="m",
+        custom_icon="mdi:thermometer-lines",
+        value_fn=_quota_zero,
+    ),
+
+    # ---- Riepilogo di oggi ----
+    IlMeteoSensorDescription(
         key="max_oggi",
         name="Temperatura Massima Oggi",
         device_class=SensorDeviceClass.TEMPERATURE,
         custom_unit=UnitOfTemperature.CELSIUS,
-        value_fn=lambda d: _temp(_today(d, "@max")),
+        value_fn=lambda d: _temp(_oggi(d).get("@max")),
     ),
     IlMeteoSensorDescription(
         key="min_oggi",
         name="Temperatura Minima Oggi",
         device_class=SensorDeviceClass.TEMPERATURE,
         custom_unit=UnitOfTemperature.CELSIUS,
-        value_fn=lambda d: _temp(_today(d, "@min")),
+        value_fn=lambda d: _temp(_oggi(d).get("@min")),
     ),
     IlMeteoSensorDescription(
         key="aria_iqa",
         name="Qualità dell'Aria (IQA)",
         custom_icon="mdi:air-filter",
-        value_fn=lambda d: _today(d, "@aria_iqa"),
+        value_fn=lambda d: _oggi(d).get("@aria_iqa"),
     ),
     IlMeteoSensorDescription(
         key="aria_pollini",
         name="Livello Pollini",
         custom_icon="mdi:flower-pollen",
-        value_fn=lambda d: _today(d, "@aria_pollini"),
+        value_fn=lambda d: _oggi(d).get("@aria_pollini"),
     ),
     IlMeteoSensorDescription(
         key="precipitazioni_oggi",
         name="Precipitazioni Oggi",
         custom_icon="mdi:weather-rainy",
-        value_fn=lambda d: _today(d, "@precipitazioni_valore"),
+        value_fn=lambda d: _oggi(d).get("@precipitazioni_valore"),
     ),
     IlMeteoSensorDescription(
         key="attendibilita",
@@ -195,15 +200,58 @@ SENSORS: list[IlMeteoSensorDescription] = [
         state_class=SensorStateClass.MEASUREMENT,
         custom_unit=PERCENTAGE,
         custom_icon="mdi:chart-line",
-        value_fn=lambda d: _float(_today(d, "@attendibilita_prob")),
+        value_fn=lambda d: _float(_oggi(d).get("@attendibilita_prob")),
+    ),
+
+    # ---- Riepilogo di domani ----
+    # Nota: ilMeteo non fornisce un testo descrittivo per i giorni futuri,
+    # solo il simbolo numerico. Qui esponiamo la condizione HA corrispondente
+    # (es. "partlycloudy") invece del testo italiano usato per "oggi".
+    IlMeteoSensorDescription(
+        key="condizione_domani",
+        name="Condizione Meteo Domani",
+        custom_icon="mdi:weather-partly-cloudy",
+        value_fn=lambda d: _condition_from_simbolo(_domani(d).get("@simbolo", "")),
     ),
     IlMeteoSensorDescription(
-        key="quota_zero",
-        name="Quota Zero Termico",
+        key="max_domani",
+        name="Temperatura Massima Domani",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        custom_unit=UnitOfTemperature.CELSIUS,
+        value_fn=lambda d: _temp(_domani(d).get("@max")),
+    ),
+    IlMeteoSensorDescription(
+        key="min_domani",
+        name="Temperatura Minima Domani",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        custom_unit=UnitOfTemperature.CELSIUS,
+        value_fn=lambda d: _temp(_domani(d).get("@min")),
+    ),
+    IlMeteoSensorDescription(
+        key="precipitazioni_domani",
+        name="Precipitazioni Domani",
+        custom_icon="mdi:weather-rainy",
+        value_fn=lambda d: _precip_mm(_domani(d).get("@precipitazioni_valore")),
+    ),
+    IlMeteoSensorDescription(
+        key="attendibilita_domani",
+        name="Attendibilità Previsione Domani",
         state_class=SensorStateClass.MEASUREMENT,
-        custom_unit="m",
-        custom_icon="mdi:thermometer-lines",
-        value_fn=_quota_zero,
+        custom_unit=PERCENTAGE,
+        custom_icon="mdi:chart-line",
+        value_fn=lambda d: _float(_domani(d).get("@attendibilita_prob")),
+    ),
+    IlMeteoSensorDescription(
+        key="aria_iqa_domani",
+        name="Qualità dell'Aria (IQA) Domani",
+        custom_icon="mdi:air-filter",
+        value_fn=lambda d: _domani(d).get("@aria_iqa"),
+    ),
+    IlMeteoSensorDescription(
+        key="aria_pollini_domani",
+        name="Livello Pollini Domani",
+        custom_icon="mdi:flower-pollen",
+        value_fn=lambda d: _domani(d).get("@aria_pollini"),
     ),
 ]
 
